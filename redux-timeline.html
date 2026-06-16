@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redux Studiolab — Platform Timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f8f8f6;
+    --bg-tertiary: #f1f0ec;
+    --text-primary: #0a0a0a;
+    --text-secondary: #6b6b6b;
+    --text-tertiary: #aaaaaa;
+    --border: rgba(0,0,0,0.1);
+    --border-md: rgba(0,0,0,0.18);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111111;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #222222;
+      --text-primary: #f0f0f0;
+      --text-secondary: #999999;
+      --text-tertiary: #555555;
+      --border: rgba(255,255,255,0.1);
+      --border-md: rgba(255,255,255,0.18);
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .page-header {
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+  .page-title { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  .page-sub { font-size: 13px; color: var(--text-secondary); }
+  .page-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 500;
+    background: #EEEDFE;
+    color: #3C3489;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .main { padding: 24px 32px 48px; max-width: 1400px; margin: 0 auto; }
+
+  .controls { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ctrl-label { font-size: 12px; color: var(--text-secondary); margin-right: 4px; }
+  .gt-btn {
+    font-size: 12px; padding: 5px 14px; border-radius: 20px;
+    border: 0.5px solid var(--border-md); background: transparent;
+    color: var(--text-secondary); cursor: pointer; transition: all .15s;
+    font-family: var(--font);
+  }
+  .gt-btn:hover { background: var(--bg-secondary); }
+  .gt-btn.active { border-color: transparent; color: #26215C; background: #EEEDFE; }
+  .gt-btn.active.p2 { color: #04342C; background: #E1F5EE; }
+  .gt-btn.active.p3 { color: #042C53; background: #E6F1FB; }
+  .gt-btn.active.p4 { color: #412402; background: #FAEEDA; }
+
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .gantt-wrap {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    overflow-x: auto;
+  }
+  .gantt-inner { min-width: 900px; }
+
+  .month-headers { display: flex; border-bottom: 0.5px solid var(--border); }
+  .mh {
+    font-size: 11px; font-weight: 500; color: var(--text-secondary);
+    padding: 7px 0; text-align: center; flex: 1;
+    border-right: 0.5px solid var(--border); background: var(--bg-secondary);
+  }
+  .mh:last-child { border-right: none; }
+
+  .week-headers { display: flex; border-bottom: 0.5px solid var(--border); }
+  .wh {
+    font-size: 10px; color: var(--text-tertiary);
+    padding: 4px 0; text-align: center; flex: 1;
+    border-right: 0.5px solid var(--border); background: var(--bg-secondary);
+  }
+  .wh:last-child { border-right: none; }
+
+  .ws-group { border-bottom: 0.5px solid var(--border); }
+  .ws-group:last-child { border-bottom: none; }
+  .ws-section-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px; background: var(--bg-tertiary);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .ws-section-label { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+
+  .ws-row { display: flex; align-items: center; min-height: 38px; border-bottom: 0.5px solid var(--border); }
+  .ws-row:last-child { border-bottom: none; }
+  .ws-label {
+    font-size: 12px; color: var(--text-secondary);
+    padding: 6px 14px; flex-shrink: 0; min-height: 38px;
+    display: flex; align-items: center;
+    border-right: 0.5px solid var(--border);
+  }
+  .ws-grid { flex: 1; position: relative; min-height: 38px; display: flex; }
+  .ws-week { flex: 1; border-right: 0.5px solid var(--border); min-height: 38px; }
+  .ws-week:last-child { border-right: none; }
+  .ws-week.shade { background: var(--bg-secondary); }
+
+  .bar-container {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    height: 20px; border-radius: 4px;
+    display: flex; align-items: center; padding: 0 8px;
+    font-size: 10px; font-weight: 500;
+    overflow: hidden; white-space: nowrap; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .bar-container:hover { opacity: 0.82; }
+
+  .milestone-wrap {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center;
+    z-index: 10; pointer-events: none;
+  }
+  .m-diamond { width: 12px; height: 12px; transform: rotate(45deg); border: 2px solid; }
+
+  .milestone-footer {
+    position: relative; height: 36px;
+    background: var(--bg-secondary);
+    border-top: 0.5px solid var(--border);
+  }
+  .milestone-footer-inner { display: flex; height: 100%; position: relative; }
+  .ms-label {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    text-align: center; z-index: 10; white-space: nowrap;
+  }
+  .ms-label-main { font-size: 10px; font-weight: 500; }
+  .ms-label-sub { font-size: 9px; color: var(--text-tertiary); }
+
+  .tooltip-box {
+    position: fixed; background: var(--bg);
+    border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-md);
+    padding: 10px 14px; font-size: 12px;
+    z-index: 500; min-width: 190px; max-width: 250px;
+    pointer-events: none; display: none;
+    font-family: var(--font);
+  }
+  .tooltip-box.show { display: block; }
+  .tt-title { font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .tt-sub { color: var(--text-secondary); margin-bottom: 8px; font-size: 11px; }
+  .tt-items { list-style: none; padding: 0; }
+  .tt-items li {
+    color: var(--text-secondary); font-size: 11px;
+    padding: 2px 0; display: flex; gap: 6px;
+  }
+  .tt-items li::before { content: "·"; color: var(--text-tertiary); flex-shrink: 0; }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px; margin-bottom: 20px;
+  }
+  .summary-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+  }
+  .sc-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
+  .sc-value { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+  .sc-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-title">Redux Studiolab</span>
+  <span class="page-sub">Platform build timeline</span>
+  <span class="page-badge">6-month · 24 weeks</span>
+</div>
+
+<div class="main">
+
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="sc-label">Beta target</div>
+      <div class="sc-value">60 days</div>
+      <div class="sc-sub">TestFlight · Week 8</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Web launch</div>
+      <div class="sc-value">Month 3</div>
+      <div class="sc-sub">Public platform · Week 13</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Partners</div>
+      <div class="sc-value">3+</div>
+      <div class="sc-sub">Onboarded · Week 17</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">App Store</div>
+      <div class="sc-value">Month 6</div>
+      <div class="sc-sub">iOS + tvOS · Week 24</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Workstreams</div>
+      <div class="sc-value">7</div>
+      <div class="sc-sub">Tracked across 4 phases</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <span class="ctrl-label">Filter:</span>
+    <button class="gt-btn active" onclick="filterPhase('all',this)">All phases</button>
+    <button class="gt-btn" onclick="filterPhase('p1',this)">Phase 1 — beta</button>
+    <button class="gt-btn p2" onclick="filterPhase('p2',this)">Phase 2 — core</button>
+    <button class="gt-btn p3" onclick="filterPhase('p3',this)">Phase 3 — scale</button>
+    <button class="gt-btn p4" onclick="filterPhase('p4',this)">Phase 4 — launch</button>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#7F77DD"></div>Phase 1 — beta</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>Phase 2 — core platform</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>Phase 3 — scale</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#BA7517"></div>Phase 4 — launch</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#E24B4A;border-radius:50%"></div>Milestone</div>
+  </div>
+
+  <div class="gantt-wrap">
+    <div class="gantt-inner" id="gantt-inner"></div>
+  </div>
+</div>
+
+<div id="tt" class="tooltip-box"></div>
+
+<script>
+const WEEKS = 24;
+const LABEL_W = 160;
+
+const PHASES = {
+  p1:{color:'#7F77DD',bg:'#EEEDFE',tc:'#26215C',label:'Phase 1 — beta'},
+  p2:{color:'#1D9E75',bg:'#E1F5EE',tc:'#04342C',label:'Phase 2 — core'},
+  p3:{color:'#378ADD',bg:'#E6F1FB',tc:'#042C53',label:'Phase 3 — scale'},
+  p4:{color:'#BA7517',bg:'#FAEEDA',tc:'#412402',label:'Phase 4 — launch'},
+};
+
+const workstreams = [
+  { section:'Infrastructure & backend', rows:[
+    {label:'Supabase setup & schema',phase:'p1',start:1,end:3,items:['Project creation (dev/staging/prod)','Database schema: users, content, watchlists','Row-level security policies','Auth: email + admin invite flow']},
+    {label:'Storage & file pipeline',phase:'p1',start:3,end:6,items:['Storage buckets: video, thumbs, subtitles','Upload validation (codec, size, duration)','Transcoding pipeline setup','CDN configuration']},
+    {label:'Realtime & sync',phase:'p1',start:5,end:8,items:['Supabase Realtime subscriptions','Watchlist sync iOS ↔ tvOS','Offline cache (Core Data)','Delta sync on reconnect']},
+    {label:'CDN optimisation',phase:'p3',start:17,end:20,items:['Adaptive bitrate delivery (HLS)','Edge caching for primary markets','Performance benchmarking','Load test: concurrent viewers']},
+  ]},
+  { section:'CMS & admin portal', rows:[
+    {label:'Admin portal scaffold',phase:'p1',start:2,end:5,items:['React + TypeScript setup','Login + role-based routing','Content upload form','Metadata validation UI']},
+    {label:'Review queue & approval',phase:'p1',start:4,end:7,items:['Submission inbox','Approve / reject with notes','Email notifications','Takedown workflow']},
+    {label:'Editorial & analytics',phase:'p2',start:9,end:14,items:['Featured collections editor','Editorial picks curation','Play counts & watchlist analytics','Viewer registration metrics']},
+    {label:'Institutional management',phase:'p3',start:17,end:20,items:['Multi-institution accounts','Content scoped per institution','Onboarding documentation','Partner admin handoff']},
+  ]},
+  { section:'iOS app', rows:[
+    {label:'Core app scaffold',phase:'p1',start:5,end:7,items:['SwiftUI MVVM project','Supabase client integration','Home + browse screens','Content detail view']},
+    {label:'Watchlist & auth',phase:'p1',start:6,end:8,items:['Watchlist add / remove / reorder','Favourites with Realtime sync','User registration + login','Settings + account management']},
+    {label:'Discovery expansion',phase:'p2',start:9,end:14,items:['Search with filters','Category browsing','Editorial collections','Trailer playback']},
+  ]},
+  { section:'tvOS app', rows:[
+    {label:'tvOS app + playback',phase:'p1',start:7,end:9,items:['tvOS SwiftUI project','Watchlist home screen','Full-screen AVKit playback','Info overlay + chapter nav']},
+    {label:'Polish & autoplay',phase:'p2',start:11,end:14,items:['Next-in-list autoplay','Improved playback controls','Cross-device sign-in flow','tvOS UI refinements']},
+  ]},
+  { section:'Web platform', rows:[
+    {label:'React web scaffold',phase:'p1',start:1,end:3,items:['TypeScript + routing setup','Supabase client','Design system tokens','Responsive layout shell']},
+    {label:'Public site launch',phase:'p2',start:9,end:13,items:['Browse + search','Viewer registration','Content detail pages','SEO: Open Graph + structured data']},
+    {label:'Marketing site',phase:'p4',start:21,end:24,items:['Platform landing page','Institutional application form','Viewer sign-up flow','Press + partner assets']},
+  ]},
+  { section:'Design', rows:[
+    {label:'Design system',phase:'p1',start:1,end:4,items:['Figma component library','Typography + colour tokens','iOS, tvOS, web components','Interaction patterns']},
+    {label:'UX flows — all screens',phase:'p1',start:3,end:7,items:['iPhone: browse, watchlist, auth','tvOS: home, playback, info','Admin: upload, review, dashboard','Design QA across builds']},
+  ]},
+  { section:'QA & launch', rows:[
+    {label:'TestFlight distribution',phase:'p1',start:8,end:9,items:['Beta build packaged','Stakeholder TestFlight links','Demo script prepared','Feedback collection']},
+    {label:'Accessibility audit',phase:'p3',start:17,end:19,items:['WCAG 2.1 AA — web','VoiceOver — iOS + tvOS','Keyboard nav — admin','Remediation & retest']},
+    {label:'Security & load testing',phase:'p3',start:18,end:21,items:['Auth flow pen test','RLS policy audit','Concurrent viewer load test','Bottleneck remediation']},
+    {label:'Full QA + App Store',phase:'p4',start:21,end:24,items:['All-platform regression suite','App Review guidelines check','iOS + tvOS submission','Monitoring setup']},
+  ]},
+];
+
+const milestones = [
+  {week:8, label:'Beta live', sub:'TestFlight', phase:'p1'},
+  {week:13,label:'Web launch',sub:'Public platform',phase:'p2'},
+  {week:17,label:'3+ partners',sub:'Onboarded',phase:'p3'},
+  {week:24,label:'App Store',sub:'Submitted',phase:'p4'},
+];
+
+let activePhase = 'all';
+const tt = document.getElementById('tt');
+
+function pct(w){ return ((w-1)/WEEKS*100).toFixed(4)+'%'; }
+function wpct(s,e){ return ((e-s+1)/WEEKS*100).toFixed(4)+'%'; }
+
+function buildGantt(){
+  const root = document.getElementById('gantt-inner');
+  let html = '';
+
+  html += `<div style="display:flex">`;
+  html += `<div style="width:${LABEL_W}px;flex-shrink:0;background:var(--bg-secondary);border-right:0.5px solid var(--border)"></div>`;
+  html += `<div style="flex:1">`;
+  html += `<div class="month-headers">`;
+  ['Month 1','Month 2','Month 3','Month 4','Month 5','Month 6'].forEach(m=>{
+    html+=`<div class="mh">${m}</div>`;
+  });
+  html += `</div><div class="week-headers">`;
+  for(let w=1;w<=WEEKS;w++) html+=`<div class="wh">W${w}</div>`;
+  html += `</div></div></div>`;
+
+  workstreams.forEach(ws=>{
+    const rows = ws.rows.filter(r=>activePhase==='all'||r.phase===activePhase);
+    if(!rows.length) return;
+    html += `<div class="ws-group">`;
+    html += `<div class="ws-section-head"><span class="ws-section-label">${ws.section}</span></div>`;
+    rows.forEach(row=>{
+      const ph = PHASES[row.phase];
+      const enc = encodeURIComponent(JSON.stringify({title:row.label,phase:ph.label,weeks:`Week ${row.start}–${row.end}`,items:row.items}));
+      html += `<div class="ws-row">`;
+      html += `<div class="ws-label" style="width:${LABEL_W}px;flex-shrink:0">${row.label}</div>`;
+      html += `<div class="ws-grid">`;
+      for(let w=1;w<=WEEKS;w++) html+=`<div class="ws-week${Math.ceil(w/4)%2===0?' shade':''}"></div>`;
+      html += `<div class="bar-container" style="left:${pct(row.start)};width:${wpct(row.start,row.end)};background:${ph.color};color:#fff" onmouseenter="showTT(event,'${enc}')" onmouseleave="hideTT()">`;
+      html += `<span style="font-size:10px;font-weight:500;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${row.label}</span>`;
+      html += `</div>`;
+      milestones.forEach(ms=>{
+        if(ms.week>=row.start && ms.week<=row.end+1){
+          const mph = PHASES[ms.phase];
+          html+=`<div class="milestone-wrap" style="left:${pct(ms.week)}"><div class="m-diamond" style="background:${mph.bg};border-color:${mph.color}"></div></div>`;
+        }
+      });
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+  });
+
+  html += `<div class="milestone-footer"><div style="display:flex;padding-left:${LABEL_W}px;height:100%;position:relative">`;
+  for(let w=1;w<=WEEKS;w++) html+=`<div class="ws-week${Math.ceil(w/4)%2===0?' shade':''}"></div>`;
+  milestones.forEach(ms=>{
+    const mph = PHASES[ms.phase];
+    html+=`<div class="ms-label" style="left:${((ms.week-1)/WEEKS*100).toFixed(2)}%">`;
+    html+=`<div class="ms-label-main" style="color:${mph.color}">${ms.label}</div>`;
+    html+=`<div class="ms-label-sub">${ms.sub}</div></div>`;
+  });
+  html += `</div></div>`;
+
+  root.innerHTML = html;
+}
+
+function showTT(e, enc){
+  const d = JSON.parse(decodeURIComponent(enc));
+  tt.innerHTML = `<div class="tt-title">${d.title}</div><div class="tt-sub">${d.phase} · ${d.weeks}</div><ul class="tt-items">${d.items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+  tt.classList.add('show');
+  moveTT(e);
+}
+function hideTT(){ tt.classList.remove('show'); }
+function moveTT(e){
+  const x = e.clientX + 14, y = e.clientY + 14;
+  tt.style.left = (x + 260 > window.innerWidth ? e.clientX - 270 : x) + 'px';
+  tt.style.top = (y + 200 > window.innerHeight ? e.clientY - 210 : y) + 'px';
+}
+document.addEventListener('mousemove', e=>{ if(tt.classList.contains('show')) moveTT(e); });
+
+function filterPhase(phase, btn){
+  activePhase = phase;
+  document.querySelectorAll('.gt-btn').forEach(b=>{
+    b.className = 'gt-btn' + (b===btn ? ' active' : '');
+    if(b===btn && phase!=='all') b.classList.add(phase);
+  });
+  buildGantt();
+}
+
+buildGantt();
+</script>
+</body>
+</html>
